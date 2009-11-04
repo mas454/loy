@@ -684,7 +684,7 @@ static void token_info_pop(struct parser_params*, const char *token);
 %type <node> lambda f_larglist lambda_body
 %type <node> brace_block cmd_brace_block do_block lhs none fitem
 %type <node> mlhs mlhs_head mlhs_basic mlhs_item mlhs_node mlhs_post mlhs_inner
-%type <node> sexp lisp_list llists
+%type <node> sexp  llists //lisp_list
 %type <id>   fsym variable sym symbol operation operation2 operation3
 %type <id>   cname fname op f_rest_arg f_block_arg opt_f_block_arg f_norm_arg f_bad_arg
 /*%%%*/
@@ -3016,23 +3016,29 @@ primary		: literal
 
 sexp            : literal
                     {
+		      lex_state = EXPR_BEG;
 		      $$ = $1;
 		    }
-                | lisp_list
+                | tLPAREN llists ')'
+                    {
+		      lex_state = EXPR_BEG;
+		      $$ = $2;
+		    }
                 | fname
                     {
+		      lex_state = EXPR_BEG;
 		      $$ = NEW_LIT(ID2SYM($1));
 		    }
                 ;
 
-lisp_list       : tLPAREN llists rparen
+/*lisp_list       : tLPAREN llists rparen
                   {
 		   $$ = $2;
 		  }
-;
-llists          : sexp {lex_state = EXPR_ARG;} llists
+		  ;*/
+llists          : sexp llists
                   {
-		    $$ = NEW_LLIST($1, $3);
+		    $$ = NEW_LLIST($1, $2);
 		  }
                 | sexp
                   {
