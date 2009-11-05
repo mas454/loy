@@ -1,6 +1,11 @@
+def test
+ puts "abc"
+ 20
+end
+
 a = lblock 
-          (== 10 10)
+          (test)
     end
 
-10 + 20
+test
 puts a

@@ -2933,36 +2933,44 @@ setup_args(rb_iseq_t *iseq, LINK_ANCHOR *args, NODE *argn, unsigned long *flag)
     }
     return argc;
 }
+static void
+lisp_call_compile(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE *node, int poped)
+{
+  DECL_ANCHOR(recv);
+  DECL_ANCHOR(args);
+  VALUE v = node->nd_car->nd_lit;
+  unsigned long flag = 0;
+  VALUE parent_block = iseq->compile_data->current_block;
+  iseq->compile_data->current_block = Qfalse;
 
+  INIT_ANCHOR(recv);
+  INIT_ANCHOR(args);
+  
+  if(SYMBOL_P(v)){
+    NODE *list = node->nd_cdr;
+    int argc = -1;
+    ADD_CALL_RECEIVER(recv, nd_line(node));
+    argc = INT2FIX(0);
+    ADD_SEQ(ret, recv);
+    ADD_SEQ(ret, args);
+    flag |= VM_CALL_VCALL_BIT;
+    flag |= VM_CALL_FCALL_BIT;
+    ADD_SEND_R(ret, nd_line(node), v, argc, parent_block, LONG2FIX(flag));
+    if(poped){
+      ADD_INSN(ret, nd_line(node), pop);
+    }
+  }
+    
+}
 static void
 lisp_compile(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE *node, int poped)
 {
   
   if(nd_type(node) == NODE_LIT) {
-    VALUE v = node->nd_lit;
-    if(SYMBOL_P(v))
-      
+    VALUE v = node->nd_lit;      
     COMPILE_(ret, "atom lisp", node, poped);
   }else if(nd_type(node) == NODE_LLIST) {
-    VALUE v = node->nd_car->nd_lit;
-    if(SYMBOL_P(v)){
-      NODE *list = node->nd_cdr;
-      int argc = -1;
-      while(list){
-	COMPILE_(ret, "atom lisp", list->nd_car, poped);
-	list = list->nd_cdr;
-	argc++;
-      }
-      ADD_SEND(ret, nd_line(node), v, INT2FIX(argc));
-      
-    }else{
-    
-      lisp_compile(iseq, ret, node->nd_car, poped);
-
-      if(node->nd_cdr != 0){
-	lisp_compile(iseq, ret, node->nd_cdr, poped);
-      }
-    }
+    lisp_call_compile(iseq, ret, node, poped);
   }
 
   return;
