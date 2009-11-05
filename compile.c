@@ -2939,12 +2939,29 @@ lisp_compile(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE *node, int poped)
 {
   
   if(nd_type(node) == NODE_LIT) {
+    VALUE v = node->nd_lit;
+    if(SYMBOL_P(v))
+      
     COMPILE_(ret, "atom lisp", node, poped);
   }else if(nd_type(node) == NODE_LLIST) {
-    lisp_compile(iseq, ret, node->nd_car, poped);
+    VALUE v = node->nd_car->nd_lit;
+    if(SYMBOL_P(v)){
+      NODE *list = node->nd_cdr;
+      int argc = -1;
+      while(list){
+	COMPILE_(ret, "atom lisp", list->nd_car, poped);
+	list = list->nd_cdr;
+	argc++;
+      }
+      ADD_SEND(ret, nd_line(node), v, INT2FIX(argc));
+      
+    }else{
+    
+      lisp_compile(iseq, ret, node->nd_car, poped);
 
-    if(node->nd_cdr != 0){
-      lisp_compile(iseq, ret, node->nd_cdr, poped);
+      if(node->nd_cdr != 0){
+	lisp_compile(iseq, ret, node->nd_cdr, poped);
+      }
     }
   }
 
