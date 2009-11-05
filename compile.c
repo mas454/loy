@@ -2948,14 +2948,30 @@ lisp_call_compile(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE *node, int poped)
   
   if(SYMBOL_P(v)){
     NODE *list = node->nd_cdr;
-    int argc = -1;
+    VALUE argc;
     ADD_CALL_RECEIVER(recv, nd_line(node));
-    argc = INT2FIX(0);
+    if(list != 0){
+      flag |= VM_CALL_FCALL_BIT;
+      int i=0;
+      while(list){
+	lisp_compile(iseq, args, list->nd_car, poped);
+	i++;
+	list = list->nd_cdr;
+      }
+      argc = INT2FIX(i);
+    }else{
+      argc = INT2FIX(0);
+      flag |= VM_CALL_VCALL_BIT;
+      flag |= VM_CALL_FCALL_BIT;
+    }
     ADD_SEQ(ret, recv);
     ADD_SEQ(ret, args);
-    flag |= VM_CALL_VCALL_BIT;
-    flag |= VM_CALL_FCALL_BIT;
+
+    debugp_param("lisp call args argc", argc);
+    debugp_param("lisp call method", v);
+    
     ADD_SEND_R(ret, nd_line(node), v, argc, parent_block, LONG2FIX(flag));
+
     if(poped){
       ADD_INSN(ret, nd_line(node), pop);
     }

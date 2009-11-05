@@ -1,11 +1,17 @@
-def test
- puts "abc"
- 20
+def display(i)
+  puts i
+  true
 end
 
-a = lblock 
-          (test)
-    end
+def +@(i,j)
+ i + j
+end
 
-test
+def *(i, j)
+ i * j
+end
+
+a = lblock
+     (* (+ 10 10) (+ 20 10))
+    end
 puts a
