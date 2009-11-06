@@ -65,7 +65,8 @@ enum lex_state_e {
     EXPR_FNAME,			/* ignore newline, no reserved words. */
     EXPR_DOT,			/* right after `.' or `::', no reserved words. */
     EXPR_CLASS,			/* immediate after `class', no here document. */
-    EXPR_VALUE			/* alike EXPR_BEG but label is disallowed. */
+    EXPR_VALUE,			/* alike EXPR_BEG but label is disallowed. */
+    EXPR_LISPV
 };
 
 # ifdef HAVE_LONG_LONG
@@ -3019,11 +3020,15 @@ sexp            : literal
 		      lex_state = EXPR_BEG;
 		      $$ = $1;
 		    }
-                | tLPAREN llists ')'
+                | tLPAREN {lex_state = EXPR_FNAME;} llists ')'
                     {
 		      lex_state = EXPR_BEG;
-		      $$ = $2;
+		      $$ = $3;
 		    }
+/*| tLPAREN k_if sexp sexp sexp ')'
+                    {
+		      $$ = NEW_LLIST($3, NEW_LLIST($4, $5));
+		      }*/
                 | fname
                     {
 		      lex_state = EXPR_BEG;
@@ -6876,6 +6881,11 @@ parser_yylex(struct parser_params *parser)
 	    lex_state = EXPR_BEG;
 	    return tOP_ASGN;
 	}
+	/*if(lex_state == EXPR_LISPV){
+	  pushback(c);
+	  return '+';
+	  }*/
+
 	if (IS_BEG() ||
 	    (IS_ARG() && space_seen && !ISSPACE(c))) {
 	    if (IS_ARG()) arg_ambiguous();
@@ -6910,6 +6920,10 @@ parser_yylex(struct parser_params *parser)
 	    lex_state = EXPR_ARG;
 	    return tLAMBDA;
 	}
+	/*if (lex_state == EXPR_LISPV){
+	  pushback(c);
+	  return '-';
+	  }*/
 	if (IS_BEG() ||
 	    (IS_ARG() && space_seen && !ISSPACE(c))) {
 	    if (IS_ARG()) arg_ambiguous();
@@ -7207,12 +7221,16 @@ parser_yylex(struct parser_params *parser)
 	    lex_strterm = NEW_STRTERM(str_regexp, '/', 0);
 	    return tREGEXP_BEG;
 	}
+	
 	if ((c = nextc()) == '=') {
             set_yylval_id('/');
 	    lex_state = EXPR_BEG;
 	    return tOP_ASGN;
 	}
 	pushback(c);
+	/*if(lex_state == EXPR_LISPV){
+	  return '/';
+	  }*/
 	if (IS_ARG() && space_seen) {
 	    if (!ISSPACE(c)) {
 		arg_ambiguous();
@@ -7654,7 +7672,7 @@ parser_yylex(struct parser_params *parser)
 			    return keyword_do_block;
 			return keyword_do;
 		    }
-		    if (state == EXPR_BEG || state == EXPR_VALUE)
+		    if (state == EXPR_BEG || state == EXPR_VALUE) //||state == EXPR_LISPV)
 			return kw->id[0];
 		    else {
 			if (kw->id[0] != kw->id[1])
