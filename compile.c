@@ -2981,14 +2981,49 @@ lisp_call_compile(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE *node, int poped)
 static void
 lisp_compile(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE *node, int poped)
 {
-  
-  if(nd_type(node) == NODE_LIT) {
-    VALUE v = node->nd_lit;      
-    COMPILE_(ret, "atom lisp", node, poped);
-  }else if(nd_type(node) == NODE_LLIST) {
-    lisp_call_compile(iseq, ret, node, poped);
-  }
+  enum node_type type;
+  type = nd_type(node);
+  switch(type){
+   case NODE_LIT: {
+     VALUE v = node->nd_lit;      
+     COMPILE_(ret, "atom lisp", node, poped);
+     break;
+   }
+   case NODE_TRUE:  {
+     printf("test1\n");
+     COMPILE_(ret, "lisp true", node, poped);
+     break;
+   }
+   case NODE_FALSE:  {
+     printf("test2\n");
+     COMPILE_(ret, "lisp true", node, poped);
+     break;
+   }
+   case NODE_LLIST: {
+     lisp_call_compile(iseq, ret, node, poped);
+     break;
+   }
+   case NODE_LIF:{
+	LABEL *else_label, *end_label;
+	else_label = NEW_LABEL(nd_line(node));
+	end_label = NEW_LABEL(nd_line(node));
+	
+	//cond
+	lisp_compile(iseq, ret, node->nd_lcond, poped);
+	ADD_INSNL(ret, nd_line(node), branchunless, else_label);
+	
+	//then
+	lisp_compile(iseq, ret, node->nd_lt, poped);
+	ADD_INSNL(ret, nd_line(node), jump, end_label);
 
+	//else
+	ADD_LABEL(ret, else_label);
+	lisp_compile(iseq, ret, node->nd_lf, poped);
+
+	ADD_LABEL(ret, end_label);
+	break;
+   }
+  }
   return;
 }
 /**
@@ -3048,7 +3083,7 @@ iseq_compile_each(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE * node, int poped)
 	then_label = NEW_LABEL(nd_line(node));
 	else_label = NEW_LABEL(nd_line(node));
 	end_label = NEW_LABEL(nd_line(node));
-
+	
 	compile_branch_condition(iseq, cond_seq, node->nd_cond,
 				 then_label, else_label);
 	COMPILE_(then_seq, "then", node->nd_body, poped);

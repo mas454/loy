@@ -1,21 +1,6 @@
-def display(i)
-  puts i
-  true
-end
-def ==(i, j)
- i==j
-end
-def +(i,j)
- i + j
+require "lispu.rb"
+lblock
+ (if false (puts 10) (puts 50))
 end
 
-def *(i, j)
- i * j
-end
-a = lblock
 
-     (* 5 6)
-
-    end
-
-puts a

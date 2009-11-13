@@ -685,7 +685,8 @@ static void token_info_pop(struct parser_params*, const char *token);
 %type <node> lambda f_larglist lambda_body
 %type <node> brace_block cmd_brace_block do_block lhs none fitem
 %type <node> mlhs mlhs_head mlhs_basic mlhs_item mlhs_node mlhs_post mlhs_inner
-%type <node> sexp  llists //lisp_list
+%type <node> sexp  llists
+%type <id>   lisp_fname
 %type <id>   fsym variable sym symbol operation operation2 operation3
 %type <id>   cname fname op f_rest_arg f_block_arg opt_f_block_arg f_norm_arg f_bad_arg
 /*%%%*/
@@ -3015,6 +3016,16 @@ primary		: literal
                     }
 		;
 
+lisp_fname      : tIDENTIFIER
+		| tCONSTANT
+		| tFID
+                | op
+		    {
+		
+			lex_state = EXPR_END;
+			$$ = $1;
+		    }
+                ;
 sexp            : literal
                     {
 		      lex_state = EXPR_BEG;
@@ -3025,14 +3036,24 @@ sexp            : literal
 		      lex_state = EXPR_BEG;
 		      $$ = $3;
 		    }
-/*| tLPAREN k_if sexp sexp sexp ')'
+                | tLPAREN keyword_if sexp sexp sexp ')'
                     {
-		      $$ = NEW_LLIST($3, NEW_LLIST($4, $5));
-		      }*/
-                | fname
+		      $$ = NEW_LIF($3, $4, $5);
+		    }
+                | lisp_fname 
                     {
 		      lex_state = EXPR_BEG;
 		      $$ = NEW_LIT(ID2SYM($1));
+		    }
+                |keyword_true
+                    {
+		      lex_state = EXPR_BEG;
+		      $$ = NEW_TRUE();
+		    }
+                |keyword_false
+                    {
+		      lex_state = EXPR_BEG;
+		      $$ = NEW_FALSE();
 		    }
                 ;
 
