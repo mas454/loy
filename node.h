@@ -240,6 +240,10 @@ enum node_type {
 #define NODE_LBLOCK      NODE_LBLOCK
     NODE_LLIST,
 #define NODE_LLIST       NODE_LLIST
+    NODE_LIF,
+#define NODE_LIF         NODE_LIF
+    NODE_LDEF,
+#define NODE_LDEF        NODE_LDEF
     NODE_LAST
 #define NODE_LAST        NODE_LAST
 };
@@ -357,8 +361,12 @@ typedef struct RNode {
 
 #define nd_visi  u2.argc
 
+//lisp code
 #define nd_car u1.node
 #define nd_cdr u2.node
+#define nd_lcond u1.node
+#define nd_lt u2.node
+#define nd_lf u3.node
 
 #define NEW_NODE(t,a0,a1,a2) rb_node_newnode((t),(VALUE)(a0),(VALUE)(a1),(VALUE)(a2))
 
@@ -465,8 +473,13 @@ typedef struct RNode {
 #define NEW_ATTRASGN(r,m,a) NEW_NODE(NODE_ATTRASGN,r,m,a)
 #define NEW_PRELUDE(p,b) NEW_NODE(NODE_PRELUDE,p,b,0)
 #define NEW_OPTBLOCK(a) NEW_NODE(NODE_OPTBLOCK,a,0,0)
+//Lisp code
 #define NEW_LBLOCK(a)  NEW_NODE(NODE_LBLOCK, a, 0, 0)
-#define NEW_LLIST(car,cdr) NEW_NODE(NODE_LLIST,car,cdr,0) 
+#define NEW_LLIST(car,cdr) NEW_NODE(NODE_LLIST,car,cdr,0)
+#define NEW_LIF(cond, t, f) NEW_NODE(NODE_LIF, cond, t, f)
+//#define NEW_LDEF(
+//lisp code end
+
 #define NOEX_PUBLIC    0x00
 #define NOEX_NOSUPER   0x01
 #define NOEX_PRIVATE   0x02

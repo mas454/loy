@@ -2978,17 +2978,75 @@ lisp_call_compile(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE *node, int poped)
   }
     
 }
+static int
+get_match_var_idx(rb_iseq_t *iseq, ID id){
+  int idx = get_dyna_var_idx_at_raw(iseq->local_iseq, id);
+  return idx;
+}
 static void
 lisp_compile(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE *node, int poped)
 {
-  
-  if(nd_type(node) == NODE_LIT) {
-    VALUE v = node->nd_lit;      
-    COMPILE_(ret, "atom lisp", node, poped);
-  }else if(nd_type(node) == NODE_LLIST) {
-    lisp_call_compile(iseq, ret, node, poped);
-  }
+  enum node_type type;
+  type = nd_type(node);
+  switch(type){
+   case NODE_LIT: {
+     VALUE v = node->nd_lit;
+     if(SYMBOL_P(v)){
+       ID id = SYM2ID(v);
+       int local = get_match_var_idx(iseq, id);
+       if(local >= 0){
+	 int idx = iseq->local_iseq->local_size - local;
+	 ADD_INSN1(ret, nd_line(node), getlocal, INT2FIX(idx));
+       }else{
+	 int idx, lv, ls;
+	 idx = get_dyna_var_idx(iseq, id, &lv, &ls);
+	 ADD_INSN2(ret, nd_line(node), getdynamic, INT2FIX(ls - idx), INT2FIX(lv));
+       }
+     } else {
+       debugp_param("lit", node->nd_lit);
+       if (!poped) {
+	 ADD_INSN1(ret, nd_line(node), putobject, node->nd_lit);
+       }
+     }
+     break;
+   }
+   case NODE_TRUE:  {
+     if (!poped) {
+	    ADD_INSN1(ret, nd_line(node), putobject, Qtrue);
+     }
+     break;
+   }
+   case NODE_FALSE:  {
+     if (!poped) {
+       ADD_INSN1(ret, nd_line(node), putobject, Qfalse);
+     }
+     break;
+   }
+   case NODE_LLIST: {
+     lisp_call_compile(iseq, ret, node, poped);
+     break;
+   }
+   case NODE_LIF:{
+	LABEL *else_label, *end_label;
+	else_label = NEW_LABEL(nd_line(node));
+	end_label = NEW_LABEL(nd_line(node));
+	
+	//cond
+	lisp_compile(iseq, ret, node->nd_lcond, poped);
+	ADD_INSNL(ret, nd_line(node), branchunless, else_label);
+	
+	//then
+	lisp_compile(iseq, ret, node->nd_lt, poped);
+	ADD_INSNL(ret, nd_line(node), jump, end_label);
 
+	//else
+	ADD_LABEL(ret, else_label);
+	lisp_compile(iseq, ret, node->nd_lf, poped);
+
+	ADD_LABEL(ret, end_label);
+	break;
+   }
+  }
   return;
 }
 /**
@@ -3048,7 +3106,7 @@ iseq_compile_each(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE * node, int poped)
 	then_label = NEW_LABEL(nd_line(node));
 	else_label = NEW_LABEL(nd_line(node));
 	end_label = NEW_LABEL(nd_line(node));
-
+	
 	compile_branch_condition(iseq, cond_seq, node->nd_cond,
 				 then_label, else_label);
 	COMPILE_(then_seq, "then", node->nd_body, poped);
