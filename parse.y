@@ -3019,6 +3019,9 @@ primary		: literal
 lisp_fname      : tIDENTIFIER
 		| tCONSTANT
 		| tFID
+                | tIVAR
+		| tGVAR
+                | tCVAR
                 | op
 		    {
 		
@@ -3073,10 +3076,10 @@ lisp_list       : tLPAREN llists rparen
 		      lex_state = EXPR_BEG;
 		      $$ = NEW_LIF($3, $4, $5);
 		    }
-                | tLPAREN '=' lisp_fname sexp ')'
+                | tLPAREN '=' {lex_state = EXPR_BEG} lisp_fname {lex_state = EXPR_BEG} sexp ')'
                     {
 		      lex_state = EXPR_BEG;
-		      $$ = NEW_LLIST($3, $4); 
+		      $$ = NEW_LISPASGN(assignable($4,0), $6); 
 		    }
 		;
 llists          : sexp llists

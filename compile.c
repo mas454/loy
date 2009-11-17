@@ -3045,6 +3045,33 @@ lisp_compile(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE *node, int poped)
 	ADD_LABEL(ret, end_label);
 	break;
    }
+   case NODE_LISPASGN:{
+     NODE *asgn = node->nd_car;
+     lisp_compile(iseq, ret, node->nd_cdr, poped);
+     if(nd_type(asgn) == NODE_DASGN || nd_type(asgn) == NODE_DASGN_CURR){
+       int idx, lv, ls;
+       debugp_param("dassn id", rb_str_new2(rb_id2name(node->nd_vid) ? rb_id2name(node->nd_vid) : "*"));
+       if (!poped) {
+	 ADD_INSN(ret, nd_line(node), dup);
+       }
+
+	 idx = get_dyna_var_idx(iseq, asgn->nd_vid, &lv, &ls);
+	 if (idx < 0) {
+	    rb_bug("NODE_DASGN(_CURR): unknown id (%s)", rb_id2name(node->nd_vid));
+	 }
+	 ADD_INSN2(ret, nd_line(node), setdynamic,
+		  INT2FIX(ls - idx), INT2FIX(lv));
+     }else if(nd_type(asgn) == NODE_LASGN){
+	ID id = asgn->nd_vid;
+	int idx = iseq->local_iseq->local_size - get_local_var_idx(iseq, id);
+	if (!poped) {
+	    ADD_INSN(ret, nd_line(node), dup);
+	}
+	ADD_INSN1(ret, nd_line(node), setlocal, INT2FIX(idx));
+     }
+	break;
+       
+   }
   }
   return;
 }

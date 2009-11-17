@@ -242,6 +242,8 @@ enum node_type {
 #define NODE_LLIST       NODE_LLIST
     NODE_LIF,
 #define NODE_LIF         NODE_LIF
+    NODE_LISPASGN,
+#define NODE_LISPASGN    NODE_LISPASGN
     NODE_LDEF,
 #define NODE_LDEF        NODE_LDEF
     NODE_LAST
@@ -477,6 +479,7 @@ typedef struct RNode {
 #define NEW_LBLOCK(a)  NEW_NODE(NODE_LBLOCK, a, 0, 0)
 #define NEW_LLIST(car,cdr) NEW_NODE(NODE_LLIST,car,cdr,0)
 #define NEW_LIF(cond, t, f) NEW_NODE(NODE_LIF, cond, t, f)
+#define NEW_LISPASGN(a, b) NEW_NODE(NODE_LISPASGN, a, b, 0);
 //#define NEW_LDEF(
 //lisp code end
 
