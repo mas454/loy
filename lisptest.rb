@@ -1,8 +1,8 @@
 require "lispu.rb"
-x = 30
+x = "abc" + "def"
 lblock
- (puts (* x x))
-end
+ (puts (* 10 10))
 
+end
 
 

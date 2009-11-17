@@ -3042,7 +3042,6 @@ lisp_compile(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE *node, int poped)
 	//else
 	ADD_LABEL(ret, else_label);
 	lisp_compile(iseq, ret, node->nd_lf, poped);
-
 	ADD_LABEL(ret, end_label);
 	break;
    }

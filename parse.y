@@ -3041,7 +3041,8 @@ sexp            : literal
 			lex_state = EXPR_BEG;
 			$$ = $1;
 		      }
-/*              | tLPAREN keyword_if sexp sexp sexp ')'
+/*
+                | tLPAREN keyword_if sexp sexp sexp ')'
                     {
 		      $$ = NEW_LIF($3, $4, $5);
 		      }*/
