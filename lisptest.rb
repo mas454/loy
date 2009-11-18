@@ -1,6 +1,7 @@
 #x = "abc" + "def"
 require "lispu.rb"
+x=20
 lblock
- (= x 10)
+ (puts x)
 end
 

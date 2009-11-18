@@ -3004,9 +3004,7 @@ lisp_compile(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE *node, int poped)
        }
      } else {
        debugp_param("lit", node->nd_lit);
-       if (!poped) {
-	 ADD_INSN1(ret, nd_line(node), putobject, node->nd_lit);
-       }
+       ADD_INSN1(ret, nd_line(node), putobject, node->nd_lit);
      }
      break;
    }
