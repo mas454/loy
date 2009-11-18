@@ -2954,7 +2954,7 @@ lisp_call_compile(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE *node, int poped)
       flag |= VM_CALL_FCALL_BIT;
       int i=0;
       while(list){
-	lisp_compile(iseq, args, list->nd_car, poped);
+	lisp_compile(iseq, args, list->nd_car, 0);
 	i++;
 	list = list->nd_cdr;
       }

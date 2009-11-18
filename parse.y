@@ -685,8 +685,10 @@ static void token_info_pop(struct parser_params*, const char *token);
 %type <node> lambda f_larglist lambda_body
 %type <node> brace_block cmd_brace_block do_block lhs none fitem
 %type <node> mlhs mlhs_head mlhs_basic mlhs_item mlhs_node mlhs_post mlhs_inner
+
 %type <node> sexp  lisp_list llists
-%type <id>   lisp_fname
+%type <node> lisp_f_arglist lisp_f_arg_item lisp_f_args lisp_f_arg
+%type <id>   lisp_fname lisp_f_norm_arg
 %type <id>   fsym variable sym symbol operation operation2 operation3
 %type <id>   cname fname op f_rest_arg f_block_arg opt_f_block_arg f_norm_arg f_bad_arg
 /*%%%*/
@@ -3081,7 +3083,13 @@ lisp_list       : tLPAREN llists rparen
 		      lex_state = EXPR_BEG;
 		      $$ = NEW_LISPASGN(assignable($4,0), $6); 
 		    }
+                | tLPAREN k_def lisp_fname lisp_f_arglist llists ')'
+                     {
+		       lex_state = EXPR_BEG;
+		       $$ = NEW_LLIST($3, NEW_LLIST($3, $4));
+		     }
 		;
+
 llists          : sexp llists
                     {
 		      $$ = NEW_LLIST($1, $2);
@@ -3092,6 +3100,47 @@ llists          : sexp llists
 		    }
                 
                 ;
+lisp_f_norm_arg : tIDENTIFIER
+                    {
+		      /*%%%*/
+		      if (!is_local_id($1))
+			    yyerror("formal argument must be local variable");
+			shadowing_lvar($1);
+		    /*%
+		    %*/
+			$$ = $1;
+		    }
+                ;
+lisp_f_arglist  : '(' lisp_f_args rparen
+                    {
+		      $$ = $2;
+		      lex_state = EXPR_BEG;
+		      command_start = Qtrue;
+		    }
+lisp_f_args     : lisp_f_arg
+                    {
+		      $$ = new_args($1, 0, 0, 0, 0);
+		    }
+lisp_f_arg_item : lisp_f_norm_arg
+                    {
+		      arg_var($1);
+		      $$ = NEW_ARGS_AUX($1, 1);
+		    }
+                ;
+lisp_f_arg      : lisp_f_arg_item
+                | lisp_f_arg lisp_f_arg_item
+                    {
+		      /*%%%*/
+			$$ = $1;
+			$$->nd_plen++;
+			$$->nd_next = block_append($$->nd_next, $2->nd_next);
+			rb_gc_force_recycle((VALUE)$2);
+		    /*%
+			$$ = rb_ary_push($1, $2);
+		    %*/
+		    }
+		;
+
 
 primary_value	: primary
 		    {

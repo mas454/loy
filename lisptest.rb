@@ -1,11 +1,13 @@
 #require "lispu.rb"
-def x
- puts "hello"
+def +@(i,j)
+ i+j
 end
-x = 30
+def *(i, j)
+  i*j
+end
 lblock
- (x)
- (puts 30)
+ (puts (+ (* 2 3) 5))
+ (puts 20)
 end
-puts x
+
 
