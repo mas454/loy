@@ -3115,7 +3115,12 @@ iseq_compile_each(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE * node, int poped)
 	break;
       }
       case NODE_LBLOCK:{
-	lisp_compile(iseq, ret, node->nd_head, poped);
+	NODE *lb_list = node->nd_head;
+	while(lb_list->nd_cdr){
+	  lisp_compile(iseq, ret, lb_list->nd_car, 1);
+	  lb_list = lb_list->nd_cdr;
+	}
+	lisp_compile(iseq, ret, lb_list->nd_car, poped);
 	break;
       }
       case NODE_IF:{

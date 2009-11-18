@@ -3010,7 +3010,7 @@ primary		: literal
 			$$ = dispatch0(retry);
 		    %*/
 		    }
-                | keyword_lblock opt_terms sexp opt_terms k_end
+                | keyword_lblock opt_terms llists opt_terms k_end
                     {
 		      $$ = NEW_LBLOCK($3);
                     }
